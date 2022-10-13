@@ -1,0 +1,12 @@
+pipeline {
+	agent {
+		docker { image 'bash:latest' }
+	}
+	stages {
+		stage('stage1') {
+			steps {
+				sh 'echo "Hello world!"'
+			}
+		}
+	}
+}
