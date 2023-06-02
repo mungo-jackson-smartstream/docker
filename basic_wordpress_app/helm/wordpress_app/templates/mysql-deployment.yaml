@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.dbReplicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "wordpress_app.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Values.dbImageName }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.dbImage.repository }}:{{ .Values.dbImage.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.dbImage.pullPolicy }}
+          ports:
+          - name: http
+            containerPort: {{ .Values.mysqlPort }}
+            protocol: TCP
+#          livenessProbe:
+#            initialDelaySeconds: {{ .Values.initialDelaySeconds }}
+#            httpGet:
+#              path: /
+#              port: http
+#          readinessProbe:
+#            initialDelaySeconds: {{ .Values.initialDelaySeconds }}
+#            httpGet:
+#             path: /
+#             port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: app-secret
+                key: dbrootpass
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: app-secret
+                key: dbuser    
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: app-secret
+                key: dbpass
+          - name: MYSQL_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: app-secret
+                key: dbname              
+      volumes:
+      - name: mysql-pd
+        persistentVolumeClaim:
+          claimName: {{ .Values.pvcName }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
