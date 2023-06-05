@@ -40,16 +40,6 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-#          livenessProbe:
-#            initialDelaySeconds: {{ .Values.initialDelaySeconds }}
-#            httpGet:
-#              path: /
-#              port: http
-#          readinessProbe:
-#            initialDelaySeconds: {{ .Values.initialDelaySeconds }}
-#            httpGet:
-#              path: /
-#              port: http
           env: 
             - name: WORDPRESS_DB_HOST
               value: {{ .Values.wordpressDbHost }}
